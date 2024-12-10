@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "apiProfile": "2018-03-01-hybrid",
   "parameters": { },
@@ -7,14 +7,17 @@
     "vnetName": "myVNet",
     "nsgName": "myNsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
-    "addressPrefix": "10.0.0.0/24",
-    "subnetName": "Subnet-1",
-    "subnetPrefix": "10.0.0.0/24"
+    "addressPrefix": "10.0.0.0/16",
+    "subnet1Name": "Subnet-1",
+    "subnet1Prefix": "10.0.0.0/24",
+    "subnet2Name": "Subnet-2",
+    "subnet2Prefix": "10.0.1.0/24"
   },
   "resources": [
     {
       "name": "[variables('nsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2021-02-01",
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
@@ -23,11 +26,24 @@
             "properties": {
               "protocol": "*",
               "sourcePortRange": "*",
-              "destinationPortRange": "*",
+              "destinationPortRange": "80",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "rule2",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
               "direction": "Inbound"
             }
           }
@@ -37,6 +53,7 @@
     {
       "name": "[variables('vnetName')]",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-02-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
@@ -49,9 +66,18 @@
         },
         "subnets": [
           {
-            "name": "[variables('subnetName')]",
+            "name": "[variables('subnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]",
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgID')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet2Prefix')]",
               "networkSecurityGroup": {
                 "id": "[variables('nsgID')]"
               }
